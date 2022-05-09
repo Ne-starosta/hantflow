@@ -50,6 +50,9 @@
             text-field="name"
             disabled-field="notEnabled"
           ></b-form-select>
+          <b-button size="sm" @click="downloadResume" variant="outline-primary">
+            <b-icon icon="file-earmark-arrow-down" aria-hidden="true"></b-icon> Резюме
+          </b-button>
           <b-button size="sm"  v-b-modal.modal-2 variant="outline-primary">
             <b-icon icon="envelope" aria-hidden="true"></b-icon> Написать
           </b-button>
@@ -118,7 +121,10 @@
 
       <template #default>
         <div class="content">
-          <FileInput @change="saveAvatar"/>
+          <div style="display: flex; gap: 16px">
+            <FileInput @change="saveAvatar"/>
+            <FileInputTwo @change="saveResume"/>
+          </div>
           <div class="row">
             <b-form-input style="width: 355px" v-model="newUser.name" placeholder="ФИО кандидата"></b-form-input>
             <b-form-select
@@ -199,8 +205,10 @@
 </template>
 
 <script>
+import download from 'downloadjs'
 import { getDatabase, ref, child, get, set, update } from 'firebase/database'
 import FileInput from '@/components/FileInput'
+import FileInputTwo from '@/components/FileInput-2'
 import { sendEmail, sendUpdatedStatus } from '@/helpers/sendEmail'
 export default {
   mounted () {
@@ -210,7 +218,8 @@ export default {
     this.loadData()
   },
   components: {
-    FileInput
+    FileInput,
+    FileInputTwo
   },
   computed: {
     filteredList () {
@@ -232,6 +241,10 @@ export default {
   methods: {
     setSelectedId (id) {
       this.selectedId = id.toString()
+    },
+    downloadResume () {
+      const name = this.selectedData.name.toString().replace(' ', '_') + '.pdf'
+      download(this.selectedData.resume, name)
     },
     sendMailTo () {
       sendEmail(this.mailText, this.selectedData.email)
@@ -291,6 +304,17 @@ export default {
         this.newUser.avatar = reader.result
       }
     },
+    saveResume (file) {
+      const reader = new FileReader()
+      reader.readAsText(file)
+      reader.onload = function () {
+        console.log(reader.result)
+      }
+      reader.readAsDataURL(file)
+      reader.onload = () => {
+        this.newUser.resume = reader.result
+      }
+    },
     clearData () {
       this.newUser = {
         avatar: undefined,
@@ -305,7 +329,8 @@ export default {
         hrEmail: '',
         status: '',
         vacation: '',
-        comment: ''
+        comment: '',
+        resume: ''
       }
     }
   },
@@ -344,7 +369,8 @@ export default {
       hrEmail: '',
       status: 1,
       vacation: '',
-      comment: ''
+      comment: '',
+      resume: ''
     },
     mailText: ''
   })
