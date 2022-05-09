@@ -1,6 +1,7 @@
 <template>
   <div class="wrapper">
     <div class="list">
+      <span>Фильтры</span>
       <b-form-input class="searchName" v-model="searchUser" placeholder="Поиск по имени"></b-form-input>
       <div style="position: relative">
         <b-form-select
@@ -14,6 +15,20 @@
         ></b-form-select>
         <b-icon @click="() => filterJob = 0" icon="x-square-fill" variant="error" style="fill: red; right: 20px; position: absolute; margin-top: -34px;"></b-icon>
       </div>
+      <div style="position: relative">
+        <b-form-select
+          class="form-control"
+          style="width: 84%; margin: 8px"
+          v-model="filterStatus"
+          :options="statusOptions"
+          value-field="item"
+          text-field="name"
+          disabled-field="notEnabled"
+        ></b-form-select>
+        <b-icon @click="() => filterStatus = 0" icon="x-square-fill" variant="error" style="fill: red; right: 20px; position: absolute; margin-top: -34px;"></b-icon>
+      </div>
+      <hr />
+      <!--      -->
       <div @click="() => setSelectedId(item.id)" v-for="item in filteredList" :key="item.id" class="item">
         <b-avatar variant="info" :src="item.avatar"></b-avatar>
         <div>{{item.name}}</div>
@@ -46,7 +61,7 @@
           </div>
           <div style="text-align: left">
             <div class="name">{{selectedData.name}}</div>
-            <div class="age">{{selectedData.age}} года, {{selectedData.city}}</div>
+            <div class="age">{{selectedData.age}} лет, {{selectedData.city}}</div>
             <div>
               <span class="userLabel">Пол:</span>
               <span class="age">{{selectedData.male}}</span>
@@ -75,6 +90,16 @@
         </div>
         <div class="user-about">
           {{selectedData.about}}
+        </div>
+        <div class="userLabel" style="text-align: left">Комментарий HR:</div>
+        <div class="comment">
+          <b-form-textarea
+            v-model="selectedData.comment"
+            placeholder="Введите комментарий"
+            rows="3"
+            max-rows="5"
+          ></b-form-textarea>
+          <b-button variant="success" @click="updateData">Сохранить</b-button>
         </div>
       </div>
       <div v-else>
@@ -125,6 +150,13 @@
             text-field="name"
             disabled-field="notEnabled"
           ></b-form-select>
+          <div class="label">Комментарий HR</div>
+          <b-form-textarea
+            v-model="newUser.comment"
+            placeholder="Введите комментарий"
+            rows="3"
+            max-rows="6"
+          ></b-form-textarea>
         </div>
       </template>
 
@@ -188,7 +220,10 @@ export default {
       const filterJob = this.filterJob
         ? filterName.filter((item) => item.vacation === this.filterJob)
         : filterName
-      return filterJob
+      const filteredStatus = this.filterStatus
+        ? filterJob.filter((item) => +item.status === +this.filterStatus)
+        : filterJob
+      return filteredStatus
     },
     selectedData () {
       return this.list.find((item) => item.id.toString() === this.selectedId.toString())
@@ -203,6 +238,9 @@ export default {
     },
     setStatus () {
       sendUpdatedStatus(this.selectedData.status, this.selectedData.email)
+      this.updateData()
+    },
+    updateData () {
       const db = getDatabase()
       update(ref(db, 'candidates/' + this.selectedData.id), {
         ...this.selectedData
@@ -266,7 +304,8 @@ export default {
         about: '',
         hrEmail: '',
         status: '',
-        vacation: ''
+        vacation: '',
+        comment: ''
       }
     }
   },
@@ -275,6 +314,7 @@ export default {
     jobList: [],
     searchUser: '',
     filterJob: '',
+    filterStatus: '',
     selectedId: 0,
     optionsMale: [
       { item: 'Мужской', name: 'Мужской' },
@@ -303,7 +343,8 @@ export default {
       about: '',
       hrEmail: '',
       status: 1,
-      vacation: ''
+      vacation: '',
+      comment: ''
     },
     mailText: ''
   })
@@ -467,6 +508,13 @@ export default {
   position: absolute;
   right: 0;
   background-color: #858585;
+}
+.comment {
+  display: flex;
+  gap: 12px;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 40%;
 }
 
 </style>
