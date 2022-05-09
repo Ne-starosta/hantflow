@@ -81,6 +81,10 @@
               <span class="age">{{selectedData.education}}</span>
             </div>
             <div>
+              <span class="userLabel">Статус:</span>
+              <span class="age">{{selectedStatus}}</span>
+            </div>
+            <div>
               <span class="userLabel">HR-сотрудник:</span>
               <span class="age">{{selectedData.hrEmail}}</span>
             </div>
@@ -307,6 +311,10 @@ export default {
     },
     selectedData () {
       return this.list.find((item) => item.id.toString() === this.selectedId.toString())
+    },
+    selectedStatus () {
+      const test = this.statusOptions.find((item) => +item.item === +this.selectedData.status)
+      return test && test.name ? test.name : this.selectedData.status
     }
   },
   methods: {
@@ -424,8 +432,13 @@ export default {
       try {
         const result = text.slice(60000)
           .match(/(.*?)fs18/)[0]
-          .match(/\\uc0\\u[0-9]{4}|(\s\s)/g).map((item) => item.substr(-4)).map((item) => String.fromCharCode(item))
-          .join('').replace('\u0000', ' ')
+          .match(/\\uc0\\u[0-9]{4}|(\s\s)/g).map((item) => item.substr(-4)).map((item) => {
+            if (item === '  ') {
+              return ' '
+            }
+            return String.fromCharCode(item)
+          })
+          .join('')
         this.newUser.name = result
       } catch (e) {
         console.log('empty')
