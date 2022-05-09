@@ -9,7 +9,7 @@
     <input
       :ref="fileKey"
       type="file"
-      accept=".pdf"
+      accept=".doc"
       :id="fileKey"
       :name="fileKey"
       class="fileInput"

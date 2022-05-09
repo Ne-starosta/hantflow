@@ -40,21 +40,20 @@
     <div class="data">
       <div v-if="selectedId">
         <div class="buttons">
-          <b-form-select
-            class="form-control"
-            style="width: 250px"
-            v-model="selectedData.status"
-            :options="statusOptions"
-            @change="setStatus"
-            value-field="item"
-            text-field="name"
-            disabled-field="notEnabled"
-          ></b-form-select>
           <b-button size="sm" @click="downloadResume" variant="outline-primary">
             <b-icon icon="file-earmark-arrow-down" aria-hidden="true"></b-icon> Резюме
           </b-button>
+          <b-button size="sm" v-b-modal.modal-3 variant="outline-primary">
+            <b-icon icon="person-circle" aria-hidden="true"></b-icon> Статус
+          </b-button>
+          <b-button size="sm"  v-b-modal.modal-5 variant="outline-primary">
+            <b-icon icon="question-circle" aria-hidden="true"></b-icon> Тесты
+          </b-button>
           <b-button size="sm"  v-b-modal.modal-2 variant="outline-primary">
             <b-icon icon="envelope" aria-hidden="true"></b-icon> Написать
+          </b-button>
+          <b-button size="sm"  v-b-modal.modal-4 variant="outline-primary">
+            <b-icon icon="chat-right-text" aria-hidden="true"></b-icon> Комментарий
           </b-button>
           <b-button variant="danger" @click="() => deleteData(selectedData.id)">Удалить</b-button>
         </div>
@@ -93,16 +92,6 @@
         </div>
         <div class="user-about">
           {{selectedData.about}}
-        </div>
-        <div class="userLabel" style="text-align: left">Комментарий HR:</div>
-        <div class="comment">
-          <b-form-textarea
-            v-model="selectedData.comment"
-            placeholder="Введите комментарий"
-            rows="3"
-            max-rows="5"
-          ></b-form-textarea>
-          <b-button variant="success" @click="updateData">Сохранить</b-button>
         </div>
       </div>
       <div v-else>
@@ -201,6 +190,88 @@
         </b-button>
       </template>
     </b-modal>
+    <b-modal id="modal-3" title="BootstrapVue">
+      <template #modal-header>
+        <div class="head"><h5>Статус кандидата</h5></div>
+      </template>
+
+      <template #default>
+        <div style="display:flex; flex-direction: column; align-items: center;justify-content: center">
+          <b-form-select
+            class="form-control"
+            style="width: 250px"
+            v-model="selectedData.status"
+            :options="statusOptions"
+            @change="setStatus"
+            value-field="item"
+            text-field="name"
+            disabled-field="notEnabled"
+          ></b-form-select>
+          <span style="color: #858585">Для обновления статуса нажмите на поле ввода</span>
+        </div>
+      </template>
+
+      <template #modal-footer="{ ok, cancel }" class="footer">
+        <b-button variant="success" @click="ok()">
+          Сохранить
+        </b-button>
+        <b-button @click="cancel()">
+          Отменить
+        </b-button>
+      </template>
+    </b-modal>
+    <b-modal id="modal-4" title="BootstrapVue">
+      <template #modal-header>
+        <div class="head"><h5>Комментарий</h5></div>
+      </template>
+
+      <template #default>
+        <div style="display:flex; justify-content: center">
+          <b-form-textarea
+            v-model="selectedData.comment"
+            placeholder="Введите комментарий"
+            rows="3"
+            max-rows="5"
+          ></b-form-textarea>
+        </div>
+      </template>
+
+      <template #modal-footer="{ ok, cancel }" class="footer">
+        <b-button variant="success" @click="updateData(); ok()">
+          Сохранить
+        </b-button>
+        <b-button @click="cancel()">
+          Отменить
+        </b-button>
+      </template>
+    </b-modal>
+    <b-modal id="modal-5" title="BootstrapVue">
+      <template #modal-header>
+        <div class="head"><h5>Решенные тесты кандидата</h5></div>
+      </template>
+
+      <template #default>
+        <div>
+          <div style="display:flex; justify-content: center">
+            <FileInputTwo @change="saveTest"/>
+          </div>
+          <div v-if="selectedData.test">
+            <b-button size="sm" @click="downloadTest" variant="outline-primary">
+              <b-icon icon="file-earmark-arrow-down" aria-hidden="true"></b-icon> Скачать
+            </b-button>
+          </div>
+        </div>
+      </template>
+
+      <template #modal-footer="{ ok, cancel }" class="footer">
+        <b-button variant="success" @click="updateData(); ok()">
+          Сохранить
+        </b-button>
+        <b-button @click="cancel()">
+          Отменить
+        </b-button>
+      </template>
+    </b-modal>
   </div>
 </template>
 
@@ -243,8 +314,12 @@ export default {
       this.selectedId = id.toString()
     },
     downloadResume () {
-      const name = this.selectedData.name.toString().replace(' ', '_') + '.pdf'
+      const name = this.selectedData.name.toString().replace(' ', '_') + '.doc'
       download(this.selectedData.resume, name)
+    },
+    downloadTest () {
+      const name = this.selectedData.name.toString().replace(' ', '_').slice(0, 5) + '_test' + '.doc'
+      download(this.selectedData.test, name)
     },
     sendMailTo () {
       sendEmail(this.mailText, this.selectedData.email)
@@ -306,13 +381,54 @@ export default {
     },
     saveResume (file) {
       const reader = new FileReader()
-      reader.readAsText(file)
-      reader.onload = function () {
-        console.log(reader.result)
-      }
       reader.readAsDataURL(file)
       reader.onload = () => {
         this.newUser.resume = reader.result
+      }
+      const reader2 = new FileReader()
+      reader2.readAsText(file)
+      reader2.onload = () => {
+        this.autoInputData(reader2.result)
+      }
+    },
+    saveTest (file) {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = () => {
+        this.selectedData.test = reader.result
+      }
+    },
+    autoInputData (text) {
+      try {
+        const autoMail = text.match(/:.{1,}@.{1,10}"/).map((item) => item.slice(1, -1))[0]
+        this.newUser.email = autoMail || ''
+      } catch (e) {
+        console.log('empty')
+      }
+
+      try {
+        const autoPhone = text.match(/\+7.{1,32}/).map((item) => item.replace(/\\uc0\\u[0-9]{3}/g, ''))[0]
+        this.newUser.phone = autoPhone || ''
+      } catch (e) {
+        console.log('empty')
+      }
+
+      try {
+        const result = text.match(/\\uc0\\u[0-9]{4}/g).map((item) => item.substr(-4)).map((item) => String.fromCharCode(item))
+        const male = ~result.join('').indexOf('Мужчина') ? 'Мужской' : 'Женский'
+        this.newUser.male = male
+      } catch (e) {
+        console.log('empty')
+      }
+
+      try {
+        const result = text.slice(60000)
+          .match(/(.*?)fs18/)[0]
+          .match(/\\uc0\\u[0-9]{4}|(\s\s)/g).map((item) => item.substr(-4)).map((item) => String.fromCharCode(item))
+          .join('').replace('\u0000', ' ')
+        this.newUser.name = result
+      } catch (e) {
+        console.log('empty')
       }
     },
     clearData () {
@@ -330,7 +446,8 @@ export default {
         status: '',
         vacation: '',
         comment: '',
-        resume: ''
+        resume: '',
+        test: ''
       }
     }
   },
@@ -370,7 +487,8 @@ export default {
       status: 1,
       vacation: '',
       comment: '',
-      resume: ''
+      resume: '',
+      test: ''
     },
     mailText: ''
   })
