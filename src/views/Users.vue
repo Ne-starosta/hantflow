@@ -2,8 +2,9 @@
   <div class="wrapper">
     <div class="list">
       <span>Фильтры</span>
-      <b-form-input class="searchName" v-model="searchUser" placeholder="Поиск по имени"></b-form-input>
+      <b-form-input class="searchName" v-model="searchUser" placeholder="Имя кандидата"></b-form-input>
       <div style="position: relative">
+        <div v-if="!filterJob" class="filterLabel">Вакансия</div>
         <b-form-select
           class="form-control"
           style="width: 84%; margin: 8px"
@@ -16,6 +17,7 @@
         <b-icon @click="() => filterJob = 0" icon="x-square-fill" variant="error" style="fill: red; right: 20px; position: absolute; margin-top: -34px;"></b-icon>
       </div>
       <div style="position: relative">
+        <div v-if="!filterStatus" class="filterLabel">Статус</div>
         <b-form-select
           class="form-control"
           style="width: 84%; margin: 8px"
@@ -479,7 +481,7 @@ export default {
       { item: '1', name: 'Откликнулся' },
       { item: '2', name: 'Тестирование' },
       { item: '3', name: 'Интерьвю с HR' },
-      { item: '4', name: 'Интерьвю с руководителем' },
+      { item: '4', name: 'Интервью с руководителем' },
       { item: '5', name: 'Проверка ИБ' },
       { item: '6', name: 'Мед. комиисия' },
       { item: '7', name: 'Выставление оффера' },
@@ -674,4 +676,12 @@ export default {
   width: 40%;
 }
 
+.filterLabel {
+  position: absolute;
+  color: #858585;
+  font-size: 16px;
+  top: 7px;
+  pointer-events: none;
+  left: 20px;
+}
 </style>

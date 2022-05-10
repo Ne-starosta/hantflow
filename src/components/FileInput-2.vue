@@ -1,6 +1,6 @@
 <template>
   <div>
-    <label :for="fileKey" title="Загрузить резюме">
+    <label :for="fileKey" title="Загрузить файл">
       <div class="wrapper">
         <b-icon v-if="file" font-scale="4" icon="file-earmark-check"></b-icon>
         <b-icon v-else font-scale="4" icon="file-earmark"></b-icon>

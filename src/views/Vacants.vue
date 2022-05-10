@@ -175,6 +175,7 @@ export default {
   padding: 5px;
   font-weight: bolder;
   cursor: pointer;
+  justify-content: center;
   border-bottom: 1px solid #c1c1c1;
   transition: .1s;
 }

@@ -3,8 +3,10 @@
     <div class="img">
       <img alt="BackGround Icon" src="../assets/login.jpg">
     </div>
-    <Login @toggleShow="toggleShowLogin" v-if="isShowLogin"/>
-    <Signup @toggleShow="toggleShowLogin" v-else/>
+    <div>
+      <Login @toggleShow="toggleShowLogin" v-if="isShowLogin"/>
+      <Signup @toggleShow="toggleShowLogin" v-else/>
+    </div>
   </div>
 </template>
 
@@ -35,10 +37,19 @@ export default {
 .wrapper {
   display: flex;
   height: calc(100vh - 100px);
+  max-width: 2000px;
 }
 
 .img {
-  margin-top: 50px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: -20px;
+}
+
+.img img {
+  width: 100%;
 }
 
 </style>
