@@ -65,7 +65,14 @@
           </div>
           <div style="text-align: left">
             <div class="name">{{selectedData.name}}</div>
-            <div class="age">{{selectedData.age}} лет, {{selectedData.city}}</div>
+            <div>
+              <span class="userLabel">Возраст:</span>
+              <span class="age">{{selectedData.age}}</span>
+            </div>
+            <div>
+              <span class="userLabel">Город:</span>
+              <span class="age">{{selectedData.city}}</span>
+            </div>
             <div>
               <span class="userLabel">Пол:</span>
               <span class="age">{{selectedData.male}}</span>
@@ -162,7 +169,11 @@
       </template>
 
       <template #modal-footer="{ ok, cancel }" class="footer">
-        <b-button variant="success" @click="() => saveData(ok)">
+        <b-button
+          variant="success"
+          :disabled="!newUser.name || !newUser.email || !newUser.phone || !newUser.avatar"
+          @click="() => saveData(ok)"
+        >
           Сохранить
         </b-button>
         <b-button @click="cancel()">

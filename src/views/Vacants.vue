@@ -3,12 +3,14 @@
     <div class="list">
       <div @click="() => setSelectedId(item.id)" v-for="item in list" :key="item.id" class="item">
         <div>{{item.title}}</div>
+        <div v-if="item.isDel" class="del"></div>
       </div>
     </div>
     <div class="data">
       <div v-if="selectedId">
         <div class="buttons">
-          <b-button variant="danger" @click="() => deleteData(selectedData.id)">Удалить</b-button>
+          <b-button v-if="!selectedData.isDel" variant="danger" @click="() => updateData()">Архивировать</b-button>
+          <b-button v-else variant="danger" disabled>Архив</b-button>
         </div>
         <div class="title">{{selectedData.title}}</div>
         <div class="caption">{{selectedData.caption}}</div>
@@ -79,7 +81,7 @@
 </template>
 
 <script>
-import { getDatabase, ref, child, get, set } from 'firebase/database'
+import { getDatabase, ref, child, get, set, update } from 'firebase/database'
 export default {
   mounted () {
     if (!this.$store.getters.getEmail) {
@@ -95,6 +97,15 @@ export default {
   methods: {
     setSelectedId (id) {
       this.selectedId = id.toString()
+    },
+    updateData () {
+      const db = getDatabase()
+      update(ref(db, 'vacancies/' + this.selectedData.id), {
+        ...this.selectedData,
+        isDel: true
+      })
+      this.selectedId = 0
+      this.loadData()
     },
     async deleteData (id) {
       const db = getDatabase()
@@ -120,7 +131,8 @@ export default {
       const id = Number(new Date())
       set(ref(db, 'vacancies/' + id), {
         id: id,
-        ...this.newVacantion
+        ...this.newVacantion,
+        isDel: false
       })
       func()
       this.clearData()
@@ -132,7 +144,8 @@ export default {
         caption: '',
         responsibilities: '',
         expectations: '',
-        benefits: ''
+        benefits: '',
+        isDel: false
       }
     }
   },
@@ -144,7 +157,8 @@ export default {
       caption: '',
       responsibilities: '',
       expectations: '',
-      benefits: ''
+      benefits: '',
+      isDel: false
     }
   })
 }
@@ -173,6 +187,7 @@ export default {
   display: flex;
   font-size: 13px;
   padding: 5px;
+  position: relative;
   font-weight: bolder;
   cursor: pointer;
   justify-content: center;
@@ -214,5 +229,14 @@ export default {
 
 #textarea {
   margin: 10px 0;
+}
+
+.del {
+  position: absolute;
+  height: 30px;
+  width: 3px;
+  background-color: red;
+  right: 0;
+  top: 0;
 }
 </style>
