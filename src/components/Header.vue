@@ -2,7 +2,7 @@
   <div class="wrapper">
     <div id="nav">
       <div class="logo">
-        HUNTFLOW
+        MATRIX
       </div>
       <router-link to="/vacancies">Вакансии</router-link>
       <router-link to="/candidates">Кандидаты</router-link>

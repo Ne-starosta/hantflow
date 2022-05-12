@@ -1,7 +1,7 @@
 <template>
   <div>
     <label :for="fileKey" title="Загрузить фотографию">
-      <b-avatar :src='avatar' class="fileLabel" size="6rem"></b-avatar>
+      <b-avatar :src='photo' class="fileLabel" size="6rem"></b-avatar>
     </label>
     <input
       :ref="fileKey"
@@ -22,7 +22,14 @@ export default {
     fileKey: Math.random(),
     avatar: 'photo.png'
   }),
-
+  props: {
+    value: String
+  },
+  computed: {
+    photo () {
+      return this.value || 'photo.png'
+    }
+  },
   methods: {
     handlerInputFile () {
       const file = this.$refs[this.fileKey].files[0]

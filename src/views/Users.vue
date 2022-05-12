@@ -31,7 +31,13 @@
       </div>
       <hr />
       <!--      -->
-      <div @click="() => setSelectedId(item.id)" v-for="item in filteredList" :key="item.id" class="item">
+      <div
+        @click="() => setSelectedId(item.id)"
+        v-for="item in filteredList"
+        :key="item.id"
+        :class="{'isDelUser': isActive(item.vacation)}"
+        class="item"
+      >
         <b-avatar variant="info" :src="item.avatar"></b-avatar>
         <div>{{item.name}}</div>
         <div v-if="item.status === '8'" class="success"></div>
@@ -45,7 +51,7 @@
           <b-button size="sm" @click="downloadResume" variant="outline-primary">
             <b-icon icon="file-earmark-arrow-down" aria-hidden="true"></b-icon> Резюме
           </b-button>
-          <b-button size="sm" v-b-modal.modal-3 variant="outline-primary">
+          <b-button :disabled="isActive(selectedData.vacation)" size="sm" v-b-modal.modal-3 variant="outline-primary">
             <b-icon icon="person-circle" aria-hidden="true"></b-icon> Статус
           </b-button>
           <b-button size="sm"  v-b-modal.modal-5 variant="outline-primary">
@@ -57,7 +63,12 @@
           <b-button size="sm"  v-b-modal.modal-4 variant="outline-primary">
             <b-icon icon="chat-right-text" aria-hidden="true"></b-icon> Комментарий
           </b-button>
-          <b-button variant="danger" @click="() => deleteData(selectedData.id)">Удалить</b-button>
+          <b-button v-b-modal.modal-1 @click="editUserId = selectedData.id" variant="primary">
+            <b-icon icon="pencil-square" aria-hidden="true"></b-icon> Изменить
+          </b-button>
+          <b-button variant="danger" @click="() => deleteData(selectedData.id)">
+            <b-icon icon="trash" aria-hidden="true"></b-icon>
+          </b-button>
         </div>
         <div class="mainInfo">
           <div class="photo">
@@ -94,7 +105,7 @@
               <span class="age">{{selectedStatus}}</span>
             </div>
             <div>
-              <span class="userLabel">HR-сотрудник:</span>
+              <span class="userLabel">Рекрутер:</span>
               <span class="age">{{selectedData.hrEmail}}</span>
             </div>
             <div>
@@ -112,7 +123,7 @@
       </div>
     </div>
     <div class="add">
-      <b-button v-b-modal.modal-1 variant="success">
+      <b-button v-b-modal.modal-1 @click="clearData" variant="success">
         <b-icon icon="plus-lg"></b-icon>
       </b-button>
     </div>
@@ -124,20 +135,22 @@
       <template #default>
         <div class="content">
           <div style="display: flex; gap: 16px">
-            <FileInput @change="saveAvatar"/>
+            <FileInput :value="newUser.avatar" @change="saveAvatar"/>
             <FileInputTwo @change="saveResume"/>
           </div>
           <div class="row">
             <b-form-input style="width: 355px" v-model="newUser.name" placeholder="ФИО кандидата"></b-form-input>
-            <b-form-select
-              class="form-control"
-              style="width: 100px"
-              v-model="newUser.male"
-              :options="optionsMale"
-              value-field="item"
-              text-field="name"
-              disabled-field="notEnabled"
-            ></b-form-select>
+            <div style="position: relative; width: 100px;padding: 0">
+              <div v-if="!newUser.male" class="filterLabel">Пол</div>
+              <b-form-select
+                class="form-control"
+                v-model="newUser.male"
+                :options="optionsMale"
+                value-field="item"
+                text-field="name"
+                disabled-field="notEnabled"
+              ></b-form-select>
+            </div>
           </div>
           <div class="row">
             <b-form-input v-model="newUser.age"  type="number" placeholder="Возраст"></b-form-input>
@@ -150,21 +163,17 @@
           <b-form-input v-model="newUser.education" placeholder="Образование"></b-form-input>
           <b-form-input v-model="newUser.about" placeholder="О себе"></b-form-input>
           <div class="label">Вакансия, на которую претендует кандидат</div>
-          <b-form-select
-            class="form-control"
-            v-model="newUser.vacation"
-            :options="jobList"
-            value-field="item"
-            text-field="name"
-            disabled-field="notEnabled"
-          ></b-form-select>
-          <div class="label">Комментарий HR</div>
-          <b-form-textarea
-            v-model="newUser.comment"
-            placeholder="Введите комментарий"
-            rows="3"
-            max-rows="6"
-          ></b-form-textarea>
+          <div style="position: relative">
+            <div v-if="!newUser.vacation" class="filterLabel">Вакансия</div>
+            <b-form-select
+              class="form-control"
+              v-model="newUser.vacation"
+              :options="jobList"
+              value-field="item"
+              text-field="name"
+              disabled-field="notEnabled"
+            ></b-form-select>
+          </div>
         </div>
       </template>
 
@@ -243,9 +252,12 @@
       </template>
 
       <template #default>
-        <div style="display:flex; justify-content: center">
+        <div>
+          <div v-for="item in commentList" :key="item.hr">
+            <span style="font-weight: bold">{{item.hr}}</span>: <i>{{item.text}}</i>
+          </div>
           <b-form-textarea
-            v-model="selectedData.comment"
+            v-model="comment"
             placeholder="Введите комментарий"
             rows="3"
             max-rows="5"
@@ -254,7 +266,7 @@
       </template>
 
       <template #modal-footer="{ ok, cancel }" class="footer">
-        <b-button variant="success" @click="updateData(); ok()">
+        <b-button variant="success" @click="saveComment(); ok()">
           Сохранить
         </b-button>
         <b-button @click="cancel()">
@@ -309,6 +321,14 @@ export default {
     FileInput,
     FileInputTwo
   },
+  watch: {
+    editUserId () {
+      if (!this.editUserId) {
+        return
+      }
+      this.newUser = { ...this.selectedData }
+    }
+  },
   computed: {
     filteredList () {
       const filterName = this.searchUser
@@ -322,6 +342,14 @@ export default {
         : filterJob
       return filteredStatus
     },
+    commentList () {
+      const hrnow = this.$store.getters.getEmail.split('@')[0]
+      const list = Object.entries(this.selectedData.comment).map(([key, value]) => ({
+        hr: key,
+        text: value
+      })).filter((item) => item.hr !== hrnow)
+      return list
+    },
     selectedData () {
       return this.list.find((item) => item.id.toString() === this.selectedId.toString())
     },
@@ -333,6 +361,15 @@ export default {
   methods: {
     setSelectedId (id) {
       this.selectedId = id.toString()
+      const hrnow = this.$store.getters.getEmail.split('@')[0]
+      this.comment = this.selectedData.comment[hrnow] || ''
+    },
+    isActive (vacantName) {
+      const vacant = this.jobList.find((item) => item.name === vacantName)
+      if (!vacant) {
+        return false
+      }
+      return !!vacant.isDel || false
     },
     downloadResume () {
       const name = this.selectedData.name.toString().replace(' ', '_') + '.doc'
@@ -355,6 +392,17 @@ export default {
         ...this.selectedData
       })
     },
+    async saveComment () {
+      const comment = { ...this.selectedData }
+      comment.comment = {
+        ...comment.comment,
+        [this.$store.getters.getEmail.split('@')[0]]: this.comment
+      }
+      const db = getDatabase()
+      await update(ref(db, 'candidates/' + this.selectedData.id), {
+        ...comment
+      })
+    },
     async deleteData (id) {
       const db = getDatabase()
       await set(ref(db, 'candidates/' + id), null)
@@ -363,6 +411,14 @@ export default {
     },
     loadData () {
       const dbRef = ref(getDatabase())
+      get(child(dbRef, 'vacancies')).then((snapshot) => {
+        const data = Object.values(snapshot.val()).map((item) => ({
+          item: item.title,
+          name: item.title,
+          isDel: item.isDel
+        }))
+        this.jobList = data || []
+      })
       get(child(dbRef, 'candidates')).then((snapshot) => {
         if (snapshot.exists()) {
           const data = Object.values(snapshot.val())
@@ -373,22 +429,22 @@ export default {
       }).catch((error) => {
         console.error(error)
       })
-      get(child(dbRef, 'vacancies')).then((snapshot) => {
-        const data = Object.values(snapshot.val()).map((item) => ({
-          item: item.title,
-          name: item.title
-        }))
-        this.jobList = data || []
-      })
     },
-    saveData (func) {
-      const db = getDatabase()
-      const id = Number(new Date())
-      set(ref(db, 'candidates/' + id), {
-        id: id,
-        ...this.newUser,
-        hrEmail: this.$store.getters.getEmail
-      })
+    async saveData (func) {
+      if (this.editUserId) {
+        const db = getDatabase()
+        await update(ref(db, 'candidates/' + this.newUser.id), {
+          ...this.newUser
+        })
+      } else {
+        const db = getDatabase()
+        const id = Number(new Date())
+        await set(ref(db, 'candidates/' + id), {
+          id: id,
+          ...this.newUser,
+          hrEmail: this.$store.getters.getEmail
+        })
+      }
       func()
       this.clearData()
       this.loadData()
@@ -458,6 +514,8 @@ export default {
       }
     },
     clearData () {
+      this.editUserId = 0
+      this.comment = ''
       this.newUser = {
         avatar: undefined,
         name: '',
@@ -469,7 +527,7 @@ export default {
         education: '',
         about: '',
         hrEmail: '',
-        status: '',
+        status: 1,
         vacation: '',
         comment: '',
         resume: '',
@@ -479,6 +537,8 @@ export default {
   },
   data: () => ({
     list: [],
+    editUserId: 0,
+    comment: '',
     jobList: [],
     searchUser: '',
     filterJob: '',
@@ -491,10 +551,10 @@ export default {
     statusOptions: [
       { item: '1', name: 'Откликнулся' },
       { item: '2', name: 'Тестирование' },
-      { item: '3', name: 'Интерьвю с HR' },
+      { item: '3', name: 'Интерьвю с рекрутером' },
       { item: '4', name: 'Интервью с руководителем' },
       { item: '5', name: 'Проверка ИБ' },
-      { item: '6', name: 'Мед. комиисия' },
+      { item: '6', name: 'Мед. комиссия' },
       { item: '7', name: 'Выставление оффера' },
       { item: '8', name: 'Принят' },
       { item: '9', name: 'Отклонен' }
@@ -512,7 +572,7 @@ export default {
       hrEmail: '',
       status: 1,
       vacation: '',
-      comment: '',
+      comment: {},
       resume: '',
       test: ''
     },
@@ -694,5 +754,10 @@ export default {
   top: 7px;
   pointer-events: none;
   left: 20px;
+}
+
+.isDelUser {
+  background-color: #c3c3c3;
+  cursor: not-allowed;
 }
 </style>
