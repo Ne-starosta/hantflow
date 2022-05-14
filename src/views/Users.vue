@@ -309,6 +309,7 @@ import { getDatabase, ref, child, get, set, update } from 'firebase/database'
 import FileInput from '@/components/FileInput'
 import FileInputTwo from '@/components/FileInput-2'
 import { sendEmail, sendUpdatedStatus } from '@/helpers/sendEmail'
+import { logger } from '@/helpers/logger'
 export default {
   mounted () {
     if (!this.$store.getters.getEmail) {
@@ -380,6 +381,7 @@ export default {
     },
     sendMailTo () {
       sendEmail(this.mailText, this.selectedData.email)
+      logger(this.$store.getters.getEmail, 'Письмо на почту', this.mailText)
     },
     setStatus () {
       sendUpdatedStatus(this.selectedData.status, this.selectedData.email)
@@ -390,6 +392,14 @@ export default {
       update(ref(db, 'candidates/' + this.selectedData.id), {
         ...this.selectedData
       })
+      const data = {
+        ...this.selectedData,
+        status: this.selectedStatus,
+        test: '',
+        avatar: '',
+        resume: ''
+      }
+      logger(this.$store.getters.getEmail, 'Обновление данных', data)
     },
     async saveComment () {
       const comment = { ...this.selectedData }
@@ -404,12 +414,16 @@ export default {
       await update(ref(db, 'candidates/' + this.selectedData.id), {
         ...comment
       })
+
+      logger(this.$store.getters.getEmail, 'Оставил комментарий #' + comment.id, this.comment)
     },
     async deleteData (id) {
       const db = getDatabase()
       await set(ref(db, 'candidates/' + id), null)
       this.selectedId = 0
       this.loadData()
+
+      logger(this.$store.getters.getEmail, 'Удаление кандидата', id)
     },
     loadData () {
       const dbRef = ref(getDatabase())
@@ -438,6 +452,13 @@ export default {
         await update(ref(db, 'candidates/' + this.newUser.id), {
           ...this.newUser
         })
+        const data = {
+          ...this.newUser,
+          test: '',
+          avatar: '',
+          resume: ''
+        }
+        logger(this.$store.getters.getEmail, 'Обновление кандидата', data)
       } else {
         const db = getDatabase()
         const id = Number(new Date())
@@ -446,6 +467,15 @@ export default {
           ...this.newUser,
           hrEmail: this.$store.getters.getEmail
         })
+
+        const data = {
+          ...this.newUser,
+          status: 'Откликнулся',
+          test: '',
+          avatar: '',
+          resume: ''
+        }
+        logger(this.$store.getters.getEmail, 'Создание кандидата', data)
       }
       func()
       this.clearData()

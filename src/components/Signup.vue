@@ -15,6 +15,8 @@
 </template>
 
 <script>
+import { logger } from '@/helpers/logger'
+
 export default {
   name: 'Signup',
   props: {
@@ -39,6 +41,7 @@ export default {
       try {
         await this.$store.dispatch('signup', formData)
         this.$router.push('/')
+        logger(this.$store.getters.getEmail, 'Регистрация', this.$store.getters.getEmail)
       } catch (e) {
         this.showAlert()
       }

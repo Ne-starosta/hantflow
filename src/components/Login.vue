@@ -14,6 +14,8 @@
 </template>
 
 <script>
+import { logger } from '@/helpers/logger'
+
 export default {
   name: 'Login',
   props: {
@@ -33,6 +35,7 @@ export default {
       try {
         await this.$store.dispatch('login', formData)
         this.$router.push('/vacancies')
+        logger(this.$store.getters.getEmail, 'Авторизовался', this.$store.getters.getEmail)
       } catch (e) {
         this.isError = true
         // eslint-disable-next-line no-return-assign
