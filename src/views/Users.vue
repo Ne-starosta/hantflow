@@ -35,14 +35,13 @@
         @click="() => setSelectedId(item.id)"
         v-for="item in filteredList"
         :key="item.id"
-        :class="{'isDelUser': isActive(item.vacation)}"
         class="item"
       >
         <b-avatar variant="info" :src="item.avatar"></b-avatar>
         <div>{{item.name}}</div>
-        <div v-if="item.status === '8'" class="success"></div>
-        <div v-else-if="item.status === '9'" class="fail"></div>
-        <div v-else class="progress"></div>
+        <div v-if="item.status === '8'" class="success" :class="{'isDelUser': isActive(item.vacation)}"></div>
+        <div v-else-if="item.status === '9'" class="fail" :class="{'isDelUser': isActive(item.vacation)}"></div>
+        <div v-else class="progress" :class="{'isDelUser': isActive(item.vacation)}"></div>
       </div>
     </div>
     <div class="data">
@@ -394,9 +393,12 @@ export default {
     },
     async saveComment () {
       const comment = { ...this.selectedData }
-      comment.comment = {
-        ...comment.comment,
-        [this.$store.getters.getEmail.split('@')[0]]: this.comment
+      const name = this.$store.getters.getEmail.split('@')[0]
+      if (comment.comment[name]) {
+        delete comment.comment[name]
+      }
+      if (this.comment) {
+        comment.comment[name] = this.comment
       }
       const db = getDatabase()
       await update(ref(db, 'candidates/' + this.selectedData.id), {
@@ -551,7 +553,7 @@ export default {
     statusOptions: [
       { item: '1', name: 'Откликнулся' },
       { item: '2', name: 'Тестирование' },
-      { item: '3', name: 'Интерьвю с рекрутером' },
+      { item: '3', name: 'Интервью с рекрутером' },
       { item: '4', name: 'Интервью с руководителем' },
       { item: '5', name: 'Проверка ИБ' },
       { item: '6', name: 'Мед. комиссия' },
@@ -678,6 +680,7 @@ export default {
 .mainInfo {
   display: flex;
   gap: 50px;
+  margin-top: 20px;
 }
 
 .photo {
@@ -757,7 +760,6 @@ export default {
 }
 
 .isDelUser {
-  background-color: #c3c3c3;
-  cursor: not-allowed;
+  background-color: #dddb0c;
 }
 </style>
