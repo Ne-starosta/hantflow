@@ -3,7 +3,7 @@
     <div style="margin-top: 15%" v-if="!list.length">
       <b-spinner></b-spinner>
     </div>
-    <b-table v-else striped hover :items="list" :fields="fields">
+    <b-table v-else striped hover :items="list.reverse()" :fields="fields">
       <template #cell(log)="data">
         <div style="text-align: left">
           <json-viewer

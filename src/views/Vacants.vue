@@ -9,8 +9,14 @@
     <div class="data">
       <div v-if="selectedId">
         <div class="buttons">
+          <b-button v-b-modal.modal-1 @click="editUserId = selectedData.id" variant="primary">
+            <b-icon icon="pencil-square" aria-hidden="true"></b-icon> Изменить
+          </b-button>
           <b-button v-if="!selectedData.isDel" variant="danger" @click="() => updateData()">Архивировать</b-button>
           <b-button v-else variant="danger" disabled>Архив</b-button>
+          <b-button variant="danger" @click="() => deleteData(selectedData.id)">
+            <b-icon icon="trash" aria-hidden="true"></b-icon>
+          </b-button>
         </div>
         <div class="title">{{selectedData.title}}</div>
         <div class="caption">{{selectedData.caption}}</div>
@@ -26,7 +32,7 @@
       </div>
     </div>
     <div class="add">
-      <b-button v-b-modal.modal-1 variant="success">
+      <b-button v-b-modal.modal-1 variant="success" @click="clearData">
         <b-icon icon="plus-lg"></b-icon>
       </b-button>
     </div>
@@ -77,11 +83,15 @@
         </b-button>
       </template>
     </b-modal>
+    <b-alert :show="isError" class="alert" variant="danger">
+      Ошибка! Для начала удалите всех кандидатов, претендующих на эту вакансию!
+    </b-alert>
   </div>
 </template>
 
 <script>
 import { getDatabase, ref, child, get, set, update } from 'firebase/database'
+import { logger } from '@/helpers/logger'
 export default {
   mounted () {
     if (!this.$store.getters.getEmail) {
@@ -108,6 +118,22 @@ export default {
       this.loadData()
     },
     async deleteData (id) {
+      const dbRef = ref(getDatabase())
+      await get(child(dbRef, 'candidates')).then((snapshot) => {
+        if (snapshot.exists()) {
+          const data = Object.values(snapshot.val())
+          this.userList = data || []
+        } else {
+          console.log('No data available')
+        }
+      })
+      const filterList = this.userList.filter((item) => item.vacation === this.selectedData.title)
+      if (filterList.length) {
+        this.isError = true
+        // eslint-disable-next-line no-return-assign
+        setTimeout(() => this.isError = false, 3000)
+        return
+      }
       const db = getDatabase()
       await set(ref(db, 'vacancies/' + id), null)
       this.selectedId = 0
@@ -126,14 +152,26 @@ export default {
         console.error(error)
       })
     },
-    saveData (func) {
-      const db = getDatabase()
-      const id = Number(new Date())
-      set(ref(db, 'vacancies/' + id), {
-        id: id,
-        ...this.newVacantion,
-        isDel: false
-      })
+    async saveData (func) {
+      if (this.editUserId) {
+        const db = getDatabase()
+        await update(ref(db, 'vacancies/' + this.newVacantion.id), {
+          ...this.newVacantion
+        })
+        const data = { ...this.newVacantion }
+        logger(this.$store.getters.getEmail, 'Обновление вакансии', data)
+      } else {
+        const db = getDatabase()
+        const id = Number(new Date())
+        await set(ref(db, 'vacancies/' + id), {
+          id: id,
+          ...this.newVacantion,
+          isDel: false
+        })
+
+        const data = { ...this.newVacantion }
+        logger(this.$store.getters.getEmail, 'Создание вакансии', data)
+      }
       func()
       this.clearData()
       this.loadData()
@@ -149,9 +187,20 @@ export default {
       }
     }
   },
+  watch: {
+    editUserId () {
+      if (!this.editUserId) {
+        return
+      }
+      this.newVacantion = { ...this.selectedData }
+    }
+  },
   data: () => ({
     list: [],
+    userList: [],
     selectedId: 0,
+    editUserId: 0,
+    isError: false,
     newVacantion: {
       title: '',
       caption: '',
@@ -201,6 +250,7 @@ export default {
 
 .buttons {
   display: flex;
+  gap: 16px;
   justify-content: flex-end;
 }
 
@@ -238,5 +288,12 @@ export default {
   background-color: red;
   right: 0;
   top: 0;
+}
+
+.alert {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 10px 20px;
 }
 </style>
