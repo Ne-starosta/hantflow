@@ -3,7 +3,7 @@
     <div style="margin-top: 15%" v-if="!list.length">
       <b-spinner></b-spinner>
     </div>
-    <b-table v-else striped hover :items="list.reverse()" :fields="fields">
+    <b-table v-else striped hover :items="list" :fields="fields">
       <template #cell(log)="data">
         <div style="text-align: left">
           <json-viewer
@@ -51,12 +51,12 @@ export default {
     list: []
   }),
   methods: {
-    loadData () {
+    async loadData () {
       const dbRef = ref(getDatabase())
-      get(child(dbRef, 'logger')).then((snapshot) => {
+      await get(child(dbRef, 'logger')).then((snapshot) => {
         if (snapshot.exists()) {
           const data = Object.values(snapshot.val())
-          this.list = data || []
+          this.list = data.reverse() || []
         } else {
           console.log('No data available')
         }
