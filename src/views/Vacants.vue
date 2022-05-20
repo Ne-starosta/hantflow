@@ -14,6 +14,7 @@
           </b-button>
           <b-button v-if="!selectedData.isDel" variant="danger" @click="() => updateData()">Архивировать</b-button>
           <b-button v-else variant="danger" disabled>Архив</b-button>
+          <b-button v-if="selectedData.isDel" @click="() => activateData()" variant="outline-success">Активировать</b-button>
           <b-button variant="danger" @click="() => deleteData(selectedData.id)">
             <b-icon icon="trash" aria-hidden="true"></b-icon>
           </b-button>
@@ -117,6 +118,15 @@ export default {
       this.selectedId = 0
       this.loadData()
     },
+    activateData () {
+      const db = getDatabase()
+      update(ref(db, 'vacancies/' + this.selectedData.id), {
+        ...this.selectedData,
+        isDel: false
+      })
+      this.selectedId = 0
+      this.loadData()
+    },
     async deleteData (id) {
       const dbRef = ref(getDatabase())
       await get(child(dbRef, 'candidates')).then((snapshot) => {
@@ -128,13 +138,13 @@ export default {
         }
       })
       const filterList = this.userList.filter((item) => item.vacation === this.selectedData.title)
-      if (filterList.length) {
-        this.isError = true
-        // eslint-disable-next-line no-return-assign
-        setTimeout(() => this.isError = false, 3000)
-        return
-      }
+
       const db = getDatabase()
+      if (filterList.length) {
+        filterList.forEach((item) => {
+          set(ref(db, 'candidates/' + item.id), null)
+        })
+      }
       await set(ref(db, 'vacancies/' + id), null)
       this.selectedId = 0
       this.loadData()

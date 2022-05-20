@@ -179,7 +179,7 @@
       <template #modal-footer="{ ok, cancel }" class="footer">
         <b-button
           variant="success"
-          :disabled="!newUser.name || !newUser.email || !newUser.phone || !newUser.avatar"
+          :disabled="!newUser.name || !newUser.email || !newUser.phone || !newUser.avatar || !newUser.male || !newUser.vacation"
           @click="() => saveData(ok)"
         >
           Сохранить
@@ -403,7 +403,12 @@ export default {
     },
     async saveComment () {
       const comment = { ...this.selectedData }
-      const name = this.$store.getters.getEmail.split('@')[0]
+
+      if (typeof comment.comment === 'string') {
+        comment.comment = {}
+      }
+      const name = this.$store.getters.getEmail.toString().split('@')[0]
+
       if (comment.comment[name]) {
         delete comment.comment[name]
       }
@@ -510,14 +515,18 @@ export default {
     autoInputData (text) {
       try {
         const autoMail = text.match(/:.{1,}@.{1,10}"/).map((item) => item.slice(1, -1))[0]
-        this.newUser.email = autoMail || ''
+        if (autoMail.length < 40) {
+          this.newUser.email = autoMail || ''
+        }
       } catch (e) {
         console.log('empty')
       }
 
       try {
         const autoPhone = text.match(/\+7.{1,32}/).map((item) => item.replace(/\\uc0\\u[0-9]{3}/g, ''))[0]
-        this.newUser.phone = autoPhone || ''
+        if (autoPhone.length < 20) {
+          this.newUser.phone = autoPhone || ''
+        }
       } catch (e) {
         console.log('empty')
       }
@@ -540,7 +549,9 @@ export default {
             return String.fromCharCode(item)
           })
           .join('')
-        this.newUser.name = result
+        if (result.length < 100) {
+          this.newUser.name = result
+        }
       } catch (e) {
         console.log('empty')
       }
