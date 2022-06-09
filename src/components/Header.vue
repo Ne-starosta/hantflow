@@ -6,7 +6,7 @@
       </div>
       <router-link to="/vacancies">Вакансии</router-link>
       <router-link to="/candidates">Кандидаты</router-link>
-      <router-link to="/logs">Логи</router-link>
+      <router-link to="/logs">История</router-link>
     </div>
     <div>
       {{$store.getters.getEmail}}
